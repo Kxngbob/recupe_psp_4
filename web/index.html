@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>System Monitor</title>
+
+    <style>
+
+        body {
+            font-family: Arial;
+            background-color: #111;
+            color: white;
+            padding: 30px;
+        }
+
+        .box {
+            background-color: #222;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
+        button {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .cpu {
+            font-size: 40px;
+            color: lime;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<h1>System Monitor</h1>
+
+<!-- HTTP section -->
+<div class="box">
+
+    <h2>HTTP Status</h2>
+
+    <!-- Button that requests system information -->
+    <button onclick="loadStatus()">
+
+        Get System Status
+
+    </button>
+
+    <!-- Area where JSON result will appear -->
+    <pre id="statusResult"></pre>
+
+</div>
+
+<!-- WebSocket section -->
+<div class="box">
+
+    <h2>WebSocket CPU Monitor</h2>
+
+    <p>Live CPU usage:</p>
+
+    <!-- CPU value shown here -->
+    <div class="cpu" id="cpuResult">
+
+        Waiting...
+
+    </div>
+
+</div>
+
+<script>
+
+    // Function used for HTTP request
+    function loadStatus() {
+
+        // Send HTTP request using fetch()
+        fetch("http://localhost:8080/api/status")
+
+            // Convert response into JSON
+            .then(response => response.json())
+
+            // Display JSON result
+            .then(data => {
+
+                document.getElementById("statusResult")
+                    .textContent =
+                    JSON.stringify(data, null, 4);
+
+            })
+
+            // Show errors if request fails
+            .catch(error => {
+
+                document.getElementById("statusResult")
+                    .textContent =
+                    "Error: " + error;
+
+            });
+    }
+
+    // Create WebSocket connection
+    const socket =
+        new WebSocket("ws://localhost:9090");
+
+    // Executed when connection succeeds
+    socket.onopen = function () {
+
+        console.log("Connected to WebSocket server");
+    };
+
+    // Executed when server sends message
+    socket.onmessage = function (event) {
+
+        // Convert JSON text into object
+        const data = JSON.parse(event.data);
+
+        // Show CPU percentage on screen
+        document.getElementById("cpuResult")
+            .textContent =
+            data.cpu.toFixed(2) + " %";
+    };
+
+    // Executed if WebSocket error happens
+    socket.onerror = function (error) {
+
+        console.log("WebSocket error", error);
+    };
+
+    // Executed when connection closes
+    socket.onclose = function () {
+
+        document.getElementById("cpuResult")
+            .textContent =
+            "Connection closed";
+    };
+
+</script>
+
+</body>
+</html>
